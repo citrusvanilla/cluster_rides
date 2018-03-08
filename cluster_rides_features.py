@@ -278,8 +278,8 @@ def main():
     out_df["inride_mph"] = 2.23694 * (out_df.actu_dist / out_df.inride_time)
 
     # Write out.
-    out_df.to_csv("data/metrics4.csv")
-    out_df.to_pickle("data/metrics4.pkl")
+    out_df.to_csv("data/metrics.csv")
+    out_df.to_pickle("data/metrics.pkl")
 
 
 if __name__ == "__main__":
