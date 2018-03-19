@@ -120,6 +120,34 @@ def destination_ahead(heading, current_point, end_point):
 
 
 def haversine(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great circle distance between two points on the earth
+    (specified in decimal degrees).
+
+    Args:
+      lon1: longitude in decimal degrees
+      lat1: lattitude in decimal degrees
+      lon2: longitude in decimal degrees
+      lat2: lattitude in decimal degrees
+
+    Returns:
+      meters: haversine distance as float
+    """
+
+    # Convert decimal degrees to radians.
+    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
+
+    # Apply Haversine formula.
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = (math.sin(dlat/2)**2 +
+         math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2)
+    c = 2 * math.asin(math.sqrt(a))
+
+    # Radius of earth in km is 6371, convert to meters and return.
+    meters = 6371000 * c
+
+    return meters
 
 
 def remove_bad_locks(dataframe):
@@ -157,6 +185,23 @@ def remove_bad_locks(dataframe):
 
 ## ====================================================================
 
+exec('''
+def plot(route):
+  current_route = raw[raw.route_id == route]
+  start = (current_route.iloc[0].lat, current_route.iloc[0].lon)
+  x = []
+  y1 = []
+  y2 = []
+  for _, trk in current_route.iterrows():
+    x.append(trk.ride_time)
+    y1.append(haversine(start[0], start[1], trk.lat, trk.lon))
+
+  y2 = map(change, current_route.heading.shift(1), current_route.heading)
+  out = pd.concat([pd.Series(y1),pd.Series(y1).diff(), pd.Series(y2)], axis=1).reset_index(drop=True)
+  out.plot(subplots=True)
+  plt.ylim(-180,180)
+  plt.show()
+  ''')
 
 def main():
   """
@@ -227,12 +272,12 @@ def main():
       
       # Increment towards_dest_time.
       if current_displacement > 30 and track_pt.heading is not None:
-        if current_crowflies >= previous_crowflies:
+        if current_crowflies >= prev_crowflies:
           towards_dest_time += 1
 
       # Reassign pointer.
       prev_displacement = current_displacement
-      previous_crowflies = current_crowflies
+      prev_crowflies = current_crowflies
 
     # Correct number of stops for the end of the ride.
     if inride == False:
